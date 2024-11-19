@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Resume Analysis</h2>
+
+    <div class="card mb-4">
+        <div class="card-header">Resume Skills</div>
+        <div class="card-body">
+            <h5>Extracted Skills:</h5>
+            <ul class="list-group">
+                {% for skill in skills %}
+                    <li class="list-group-item">{{ skill }}</li>
+                {% empty %}
+                    <li class="list-group-item">No skills detected</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Keywords</div>
+        <div class="card-body">
+            <h5>Key Terms:</h5>
+            <ul class="list-group">
+                {% for keyword in keywords %}
+                    <li class="list-group-item">{{ keyword }}</li>
+                {% empty %}
+                    <li class="list-group-item">No keywords detected</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Matching Jobs</div>
+        <div class="card-body">
+            <h5>Potential Job Matches:</h5>
+            {% if job_matches %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Job Title</th>
+                            <th>Similarity Score</th>
+                            <th>Matched Skills</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for match in job_matches %}
+                            <tr>
+                                <td>{{ match.job.title }}</td>
+                                <td>{{ match.similarity_score|floatformat:2 }}</td>
+                                <td>
+                                    {% for skill in match.matched_skills %}
+                                        <span class="badge bg-primary">{{ skill }}</span>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No matching jobs found.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">Resume Preview</div>
+        <div class="card-body">
+            <pre>{{ raw_text_preview }}</pre>
+        </div>
+    </div>
+</div>
+{% endblock %}

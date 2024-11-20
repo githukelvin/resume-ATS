@@ -33,7 +33,7 @@ def resume_upload(request):
 
                 # Parse resume using local file path
                 parsed_data = parse_resume(file_path)
-                print(file_path)
+                # print(file_path)
 
 
                 # Parse the uploaded resume
@@ -54,7 +54,7 @@ def resume_upload(request):
                 })
 
                 # Save parsed data
-                resume.parsed_data = resume_text
+                resume.parsed_data = parsed_data
                 resume.skills= parsed_data.get("skills")
                 resume.education = parsed_data.get('education')
                 resume.experience = parsed_data.get('experience')
@@ -77,7 +77,52 @@ def resume_upload(request):
         form = ResumeUploadForm()
 
     return render(request, 'resumes/resume_upload.html', {'form': form})
+def find_matching_skills(resume_skills, job_skills):
+    """
+    Find matching skills with fuzzy matching and variations
 
+    :param resume_skills: List of skills from resume
+    :param job_skills: List of required job skills
+    :return: List of matched skills
+    """
+    matched_skills = []
+
+    for resume_skill in resume_skills:
+        for job_skill in job_skills:
+            # Normalize skills for comparison
+            resume_skill_lower = resume_skill.lower()
+            job_skill_lower = job_skill.lower()
+
+            # Exact match (case-insensitive)
+            if resume_skill_lower == job_skill_lower:
+                matched_skills.append(resume_skill)
+                break
+
+            # Partial match
+            elif (resume_skill_lower in job_skill_lower or
+                  job_skill_lower in resume_skill_lower):
+                matched_skills.append(resume_skill)
+                break
+
+            # Skill variations and common abbreviations
+            skill_variations = [
+                resume_skill_lower,
+                resume_skill.replace('.js', ''),
+                resume_skill.replace('js', ''),
+                job_skill_lower,
+                job_skill.replace('.js', ''),
+                job_skill.replace('js', '')
+            ]
+
+            if any(
+                var1 in var2 or var2 in var1
+                for var1 in skill_variations
+                for var2 in skill_variations
+            ):
+                matched_skills.append(resume_skill)
+                break
+
+    return list(set(matched_skills))  # Remove duplicates
 def find_matching_jobs(resume, text_processor=None):
     """
     Find matching jobs based on resume content
@@ -108,6 +153,7 @@ def find_matching_jobs(resume, text_processor=None):
     # Rank jobs by similarity
     ranked_jobs = []
     for job in potential_jobs:
+        # print(job.description)
         # Calculate similarity score
         similarity_score = text_processor.calculate_similarity(
             resume_text,
@@ -116,11 +162,10 @@ def find_matching_jobs(resume, text_processor=None):
 
         ranked_jobs.append({
             'job': job,
-            'similarity_score': similarity_score,
-            'matched_skills': [
-                skill for skill in resume_skills
-                if skill in job.description.lower()
-            ]
+            'similarity_score': similarity_score * 100,
+            'matched_skills':  find_matching_skills(resume_skills, job.required_skills)
+
+
         })
 
     # Sort jobs by similarity score in descending order

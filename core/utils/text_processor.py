@@ -94,7 +94,6 @@ class TextProcessor:
                     self.preprocess_text(text2)
                 ])
                 return cosine_similarity(tfidf_matrix)[0][1]
-
             elif method == 'jaccard':
                 # Jaccard similarity
                 set1 = set(self.preprocess_text(text1).split())
@@ -103,7 +102,7 @@ class TextProcessor:
                 intersection = len(set1.intersection(set2))
                 union = len(set1.union(set2))
 
-                return intersection / union if union > 0 else 0.0
+                return (intersection / union if union > 0 else 0.0) 
 
             else:
                 logger.warning(f"Unsupported similarity method: {method}")

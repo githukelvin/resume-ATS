@@ -37,7 +37,7 @@ def parse_resume(file_path):
             'education': extract_education(text),
             'raw_text': text
         }
-        print(data)
+        # print(data)
         return {
             'skills': extract_skills(text),
             'experience': extract_experience(text),

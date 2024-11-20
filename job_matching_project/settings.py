@@ -36,6 +36,11 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 # Application definition
 
 INSTALLED_APPS = [
+       # Custom apps
+    'accounts',
+    'jobs',
+    'resumes',
+    'core',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -48,11 +53,7 @@ INSTALLED_APPS = [
      'crispy_forms',
     'crispy_bootstrap4',
 
-    # Custom apps
-    'accounts',
-    'jobs',
-    'resumes',
-    'core',
+
 ]
 LOGGING = {
     'version': 1,

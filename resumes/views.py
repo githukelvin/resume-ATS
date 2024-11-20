@@ -23,8 +23,23 @@ def resume_upload(request):
                 resume = form.save(commit=False)
                 resume.candidate = request.user
 
+
+                # Save uploaded file locally
+                uploaded_file = request.FILES['file']
+                file_path = f'temp_resumes/{uploaded_file.name}'
+                with open(file_path, 'wb+') as destination:
+                    for chunk in uploaded_file.chunks():
+                        destination.write(chunk)
+
+                # Parse resume using local file path
+                parsed_data = parse_resume(file_path)
+                print(file_path)
+
+
                 # Parse the uploaded resume
-                parsed_data = parse_resume(request.FILES['file'])
+                # parsed_data = parse_resume(request.FILES['file'])
+
+                # print(parsed_data)
 
                 # Initialize text processor
                 text_processor = TextProcessor()
@@ -39,7 +54,10 @@ def resume_upload(request):
                 })
 
                 # Save parsed data
-                resume.parsed_data = parsed_data
+                resume.parsed_data = resume_text
+                resume.skills= parsed_data.get("skills")
+                resume.education = parsed_data.get('education')
+                resume.experience = parsed_data.get('experience')
                 resume.save()
 
                 # Find matching jobs
@@ -68,6 +86,7 @@ def find_matching_jobs(resume, text_processor=None):
         text_processor = TextProcessor()
 
     # Get resume skills and keywords
+    print(resume.parsed_data)
     resume_skills = resume.parsed_data.get('skills', [])
     resume_keywords = resume.parsed_data.get('keywords', [])
     resume_text = resume.parsed_data.get('raw_text', '')
@@ -126,7 +145,8 @@ def resume_analysis(request, resume_id):
             'job_matches': matching_jobs,
             'skills': resume.parsed_data.get('skills', []),
             'keywords': resume.parsed_data.get('keywords', []),
-            'raw_text_preview': resume.parsed_data.get('raw_text', '')[:500] + '...'
+            'ORIGINAL': resume.parsed_data,
+            'raw_text_preview': resume.parsed_data.get('raw_text', '')
         }
 
         return render(request, 'resumes/resume_analysis.html', context)
@@ -159,3 +179,26 @@ def resume_delete(request, resume_id):
         messages.error(request, 'Error deleting resume.')
 
     return redirect('resume_list')
+
+
+
+@login_required
+def resume_matches_overview(request):
+    # Fetch all resumes for the user
+    resumes = Resume.objects.filter(candidate=request.user).order_by('-id')
+
+    # Initialize text processor
+    text_processor = TextProcessor()
+
+    # Get matches for all resumes
+    all_resume_matches = []
+    for resume in resumes:
+        matches = find_matching_jobs(resume, text_processor)
+        all_resume_matches.append({
+            'resume': resume,
+            'matches': matches
+        })
+
+    return render(request, 'resumes/resume_matches_overview.html', {
+        'all_resume_matches': all_resume_matches
+    })

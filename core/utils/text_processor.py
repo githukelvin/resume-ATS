@@ -6,7 +6,9 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
+import re
+from collections import Counter
+import logging
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -124,16 +126,102 @@ class TextProcessor:
 
         # Default skill list
         default_skills = [
-            # Technical Skills
-            'python', 'django', 'machine learning',
-            'data analysis', 'javascript', 'react',
-            'sql', 'tensorflow', 'keras',
-            'pandas', 'numpy', 'docker',
-            'kubernetes', 'aws', 'azure',
+            # Programming Languages
+    'python', 'javascript', 'java', 'c#', 'c++', 'c', 'ruby', 'go',
+    'swift', 'scala', 'typescript', 'html', 'css', 'bash', 'sql',
 
-            # Soft Skills
-            'communication', 'leadership',
-            'teamwork', 'problem solving'
+    # Web Development Frameworks
+    'django', 'flask', 'react', 'angular', 'vue.js', 'bootstrap',
+    'node.js', 'express.js', 'spring', 'ruby on rails', 'laravel',
+
+    # Mobile Development
+    'android development', 'ios development', 'react native',
+    'flutter', 'cordova', 'xamarin',
+
+    # Database Technologies
+    'mysql', 'postgresql', 'mongodb', 'cassandra', 'redis',
+    'sqlite', 'oracle', 'nosql', 'bigtable',
+
+    # Cloud Platforms
+    'aws', 'azure', 'google cloud platform', 'ibm cloud',
+    'heroku', 'digital ocean', 'linode',
+
+    # DevOps & CI/CD
+    'docker', 'kubernetes', 'jenkins', 'travis ci', 'circleci',
+    'ansible', 'puppet', 'chef', 'terraform',
+
+    # Version Control & Collaboration
+    'git', 'github', 'gitlab', 'bitbucket', 'svn',
+
+    # Data Science & Analytics
+    'machine learning', 'deep learning', 'data visualization',
+    'pandas', 'numpy', 'scikit-learn', 'tensorflow',
+    'keras', 'matplotlib', 'seaborn',
+
+    # Business Intelligence Tools
+    'tableau', 'power bi', 'looker', 'google data studio',
+
+    # Cybersecurity Tools & Concepts
+    'penetration testing', 'network security', 'firewall',
+    'siem', 'intrusion detection', 'cryptography',
+
+    # Networking
+    'tcp/ip', 'dns', 'http/https', 'vpn', 'routing protocols',
+    'network troubleshooting', 'wireshark',
+
+    # Emerging Technologies
+    'artificial intelligence', 'natural language processing',
+    'blockchain', 'internet of things (IoT)',
+    'augmented reality', 'virtual reality',
+
+    # Software Development Methodologies
+    'agile', 'scrum', 'kanban', 'test-driven development (TDD)',
+    'continuous integration', 'continuous deployment',
+
+    # Other Tools & Technologies
+    'elasticsearch', 'apache kafka', 'redis', 'apache hive',
+    'spark', 'big data', 'hadoop',
+
+    # Miscellaneous Technologies
+    'graphql', 'socket programming', 'raspberry pi', 'arduino',
+    '3D modeling software', 'ui/ux design principles'
+     # Technical Skills
+    'python', 'django', 'flask', 'javascript', 'react', 'angular', 'vue.js',
+    'node.js', 'typescript', 'html', 'css', 'bootstrap', 'jQuery',
+    'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'tensorflow',
+    'keras', 'pytorch', 'openai', 'scikit-learn', 'pandas',
+    'numpy', 'data visualization', 'matplotlib', 'seaborn',
+    'docker', 'kubernetes', 'aws', 'azure', 'gcp', 'terraform',
+    'jenkins', 'ci/cd', 'git', 'github', 'bitbucket',
+    'machine learning', 'data analysis', 'big data', 'hadoop',
+    'spark', 'elasticsearch', 'graphql', 'api development',
+    'microservices', 'serverless architecture', 'restful services',
+
+    # Cybersecurity Skills
+    'network security', 'penetration testing', 'incident response',
+    'firewall management', 'vulnerability assessment', 'security information and event management (SIEM)',
+
+    # DevOps Skills
+    'ansible', 'puppet', 'chef', 'monitoring', 'logging', 'performance tuning',
+
+    # Soft Skills
+    'communication', 'leadership', 'teamwork', 'problem solving',
+    'project management', 'time management', 'critical thinking',
+    'adaptability', 'creativity', 'emotional intelligence',
+    'conflict resolution', 'negotiation', 'customer service',
+    'mentoring', 'collaboration',
+
+    # Emerging Technologies
+    'artificial intelligence', 'natural language processing', 'robotics',
+    'computer vision', 'augmented reality', 'virtual reality',
+    'blockchain', 'internet of things (IoT)', 'quantum computing',
+
+    # Industry-Specific Skills
+    'financial analysis', 'market research', 'regulatory compliance',
+    'business analysis', 'sales strategy', 'public speaking',
+    'branding', 'healthcare management', 'educational technology',
+    'e-commerce', 'mobile development', 'supply chain management',
+    'product development'
         ]
 
         # Use custom skills if provided, otherwise use default
@@ -166,14 +254,39 @@ class TextProcessor:
             return []
 
         try:
-            from collections import Counter
-
             # Preprocess and tokenize text
             processed_text = self.preprocess_text(text)
-            tokens = processed_text.split()
+
+            # Tokenization: Use regex to find words, ignoring punctuation
+            tokens = re.findall(r'\b\w+\b', processed_text.lower())  # Normalize to lowercase
+
+            # Remove common stop words (you may extend this list)
+            stop_words = set([
+                'the', 'and', 'is', 'in', 'to', 'a', 'that', 'of',
+                'it', 'on', 'for', 'with', 'as', 'are', 'this',
+                'but', 'by', 'an', 'be', 'at', 'from', 'or', 'about',
+                'has', 'have', 'had', 'will', 'would', 'should',
+                'can', 'could', 'may', 'might', 'must', 'being',
+                'which', 'who', 'what', 'when', 'where', 'why',
+                'also', 'than', 'such', 'like', 'just', 'other',
+                'more', 'some', 'any', 'these', 'those', 'both',
+                'few', 'many', 'several', 'last', 'first', 'next',
+                'previous', 'now', 'there', 'here', 'above', 'below',
+                'along', 'between', 'during', 'after', 'before',
+                'job', 'position', 'experience', 'responsibilities',
+                'skills', 'development', 'training', 'achievements',
+                'education', 'overview', 'summary', 'objective',
+                'interests', 'awards', 'certifications', 'technical',
+                'proficient', 'effective', 'demonstrated', 'strong',
+                'ability', 'expertise'
+            ])
+
+
+            # Filter tokens to remove stop words and single-character tokens
+            filtered_tokens = [token for token in tokens if token not in stop_words and len(token) > 1]
 
             # Count token frequencies
-            keyword_freq = Counter(tokens)
+            keyword_freq = Counter(filtered_tokens)
 
             # Return top N keywords
             return [keyword for keyword, _ in keyword_freq.most_common(top_n)]
@@ -181,7 +294,6 @@ class TextProcessor:
         except Exception as e:
             logger.error(f"Keyword extraction error: {e}")
             return []
-
     def anonymize_text(self, text, replacement='[REDACTED]'):
         """
         Anonymize sensitive information in text
@@ -196,10 +308,15 @@ class TextProcessor:
         try:
             # Regex patterns for sensitive information
             patterns = [
-                r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',  # Email
-                r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b',  # Phone number
-                r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b'  # IP Address
-            ]
+    # Email - more complex formats including subdomains, special characters, and newer TLDs
+    r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}+',  # Regex to handle multiple TLDs
+
+    # Phone - handles a variety of formats including international, extension numbers, and special characters
+    r'(?:(?:\+\d{1,3}[-. ]?)?$?\d{1,4}?$?[-. ]?\d{1,4}[-. ]?\d{1,4}(?:[-. ]?(?:#|ext\.?|x)\d+)?|(?:\+\d{1,3})?\d{1,4}[-. ]?\d{1,9})',
+
+    # IP Address - handles both IPv4 and IPv6, including CIDR notation
+    r'(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|(?:[0-9a-fA-F]{1,4}:){1,7}:|(?:[0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|(?:[0-9a-fA-F]{1,4}:){1,5}(?::[0-9a-fA-F]{1,4}){1,2}|(?:[0-9a-fA-F]{1,4}:){1,4}(?::[0-9a-fA-F]{1,4}){1,3}|(?:[0-9a-fA-F]{1,4}:){1,3}(?::[0-9a-fA-F]{1,4}){1,4}|(?:[0-9a-fA-F]{1,4}:){1,2}(?::[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:(?::[0-9a-fA-F]{1,4}){1,6}|:(?::[0-9a-fA-F]{1,4}){1,7}|::(?:ffff:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|::(?:ffff:[0-9a-fA-F]{1,4}:){1,4}(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'
+]
 
             anonymized_text = text
             for pattern in patterns:
